@@ -1,0 +1,12 @@
+# Root password MYSQL
+mysql_root: ""
+
+# Domain for subdomains new sites
+host_domain: "host.ru"
+
+# Socket
+socket_port: 9999
+socket_timeout: 60
+
+# Seconds ping
+timer: 1
