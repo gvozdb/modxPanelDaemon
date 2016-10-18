@@ -17,7 +17,7 @@
 
 __author__ = "Pavel Gvozdb"
 __created_date__ = "05.10.15"
-__version__ = "1.3.0-beta"
+__version__ = "1.3.1-beta"
 
 import os
 import sys
@@ -119,51 +119,53 @@ class Daemonizer(Daemon):
                 log_action.log(logging.ACTION, "Новое подключение к сокету с адреса "+ addr[0] )
                 try:
                     task_yaml = socket_parse(conn, addr)
-                    tasks = yaml.load( task_yaml )
 
-                    if( tasks != None and isinstance(tasks, dict) and tasks['data'] and tasks['task'] ):
-                        data = tasks['data']
-                        task = tasks['task']
+                    if (task_yaml != 'Empty'):
+                        tasks = yaml.load(task_yaml)
 
-                        for i in range(len(task)):
-                            for action in task[i].keys():
-                                #log_error.error( action )
-                                set_status(action) # ставим статус, чтобы даймона не закрыли, пока он трудится
+                        if( tasks != None and isinstance(tasks, dict) and tasks['data'] and tasks['task'] ):
+                            data = tasks['data']
+                            task = tasks['task']
 
-                                try:
-                                    if not 'wait' in data:
+                            for i in range(len(task)):
+                                for action in task[i].keys():
+                                    #log_error.error( action )
+                                    set_status(action) # ставим статус, чтобы даймона не закрыли, пока он трудится
+
+                                    try:
+                                        if not 'wait' in data:
+                                            socket_send(conn, data="Done. OK")
+                                    except:
+                                        """ соединение закрыто """
+
+                                    #### >> выполняем задание
+                                    if action == 'addplace':
+                                        status = add_place( task=task[i][action], data=data )
+
+                                    elif action == 'addmodx':
+                                        status = add_modx( task=task[i][action], data=data )
+
+                                    elif action == 'updatemodx':
+                                        status = update_modx( task=task[i][action], data=data )
+
+                                    elif action == 'packages':
+                                        status = packages( username=task[i][action]['user'] )
+
+                                    elif action == 'remove':
+                                        status = remove_site( username=task[i][action]['user'], data=data )
+
+                                    elif action == 'demo' or action == 'test' or action == 'lala':
+                                        log_error.error( action )
+                                        log_error.error( task[i] )
+                                        status = demo( task[i][action] )
+                                    #### <<
+
+                                    if 'wait' in data:
                                         socket_send(conn, data="Done. OK")
-                                except:
-                                    """ соединение закрыто """
+                        else:
+                            socket_send(conn, data="ERROR: Task incorrect")
 
-                                #### >> выполняем задание
-                                if action == 'addplace':
-                                    status = add_place( task=task[i][action], data=data )
-
-                                elif action == 'addmodx':
-                                    status = add_modx( task=task[i][action], data=data )
-
-                                elif action == 'updatemodx':
-                                    status = update_modx( task=task[i][action], data=data )
-
-                                elif action == 'packages':
-                                    status = packages( username=task[i][action]['user'] )
-
-                                elif action == 'remove':
-                                    status = remove_site( username=task[i][action]['user'], data=data )
-
-                                elif action == 'demo' or action == 'test' or action == 'lala':
-                                    log_error.error( action )
-                                    log_error.error( task[i] )
-                                    status = demo( task[i][action] )
-                                #### <<
-
-                                if 'wait' in data:
-                                    socket_send(conn, data="Done. OK")
-                    else:
-                        socket_send(conn, data="ERROR: Task incorrect")
-
-                    del tasks
+                        del tasks
                 except:
                     log_error.error( "500. Внутренняя ошибка сокета." )
                 finally:
@@ -212,9 +214,9 @@ def socket_parse(conn, addr):
     Обработка соединения с сокетом
     """
     if( addr[0] != '127.0.0.1' and addr[0] != 'localhost' ):
+        log_error.error("Кто-то пронюхивает порт даймона")
         socket_send(conn, data="Ты не тот, кого я жду")
-        log_error.error("Кто-то пронюхивает порт даймона "+ PORT)
-        return ""
+        return "Empty"
 
     data = b""
     while not data: # ждём первую строку
