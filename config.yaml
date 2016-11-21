@@ -1,3 +1,6 @@
+# Secret string
+secret: "DHJKGFksdjfghjsldFHgsyiwur89ug783rgdkhs"
+
 # Root password MYSQL
 mysql_root: ""
 

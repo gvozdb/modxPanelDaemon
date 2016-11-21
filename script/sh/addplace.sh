@@ -99,7 +99,7 @@ fi
 
 echo "Creating user and home directory..."
 
-useradd $USERNAME -m -G sftp -s "/bin/false" -d "/var/www/$USERNAME"
+useradd $USERNAME -m -G sftp -s "/bin/bash" -d "/var/www/$USERNAME"
 if [ "$?" -ne 0 ]; then
     echo "ERROR: Can't add user"
     exit 0

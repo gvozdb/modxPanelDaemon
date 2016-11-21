@@ -19,7 +19,7 @@ if [ "${#USERNAME}" -gt "$MAXLENGTH" ]; then
     exit 0
 fi
 
-############## Enter pl version MODX Revo (example: "2.3.6-pl")
+############## Enter pl version MODX Revo (example: "2.5.2-pl")
 
 VERSION=$2
 
@@ -29,6 +29,12 @@ if [ "$?" -ne 1 -o -z "$VERSION" ]; then
     echo "ERROR: Version bad symbols"
     exit 0
 fi
+
+##############
+
+############## Replace connectors url to new
+
+# sed -i -e "s/\(.*\)<context_connectors_url>.*<\/context_connectors_url>.*/\1<context_connectors_url>\/${NEW_CONNECTORS_NAME}\/<\/context_connectors_url>/" ./config.xml
 
 ##############
 

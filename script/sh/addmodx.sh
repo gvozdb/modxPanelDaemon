@@ -117,7 +117,7 @@ fi
 if [ -z "$CONNECTORSNAME" ]; then
     CONNECTORSNAME=""
 else
-    echo -e "$CONNECTORSNAME" | grep "[^_a-z0-9\-]"
+    echo -e "$CONNECTORSNAME" | grep "[^_a-zA-Z0-9\-]"
     if [ "$?" -ne 1 ]; then
         echo "ERROR: Connectors dir name is bad symbols"
         exit 0
@@ -133,7 +133,7 @@ fi
 if [ -z "$MANAGERNAME" ]; then
     MANAGERNAME=""
 else
-    echo -e "$MANAGERNAME" | grep "[^a-z0-9_\-]"
+    echo -e "$MANAGERNAME" | grep "[^_a-zA-Z0-9\-]"
     if [ "$?" -ne 1 ]; then
         echo "ERROR: Manager dir name is bad symbols"
         exit 0
@@ -149,9 +149,9 @@ fi
 if [ -z "$TABLEPREFIX" ]; then
     TABLEPREFIX=""
 else
-    echo -e "$TABLEPREFIX" | grep "[^_a-z0-9\-]"
+    echo -e "$TABLEPREFIX" | grep "[^_a-zA-Z0-9\-]"
     if [ "$?" -ne 1 ]; then
-        echo "ERROR: Tables prefix is bad symbols"
+        echo "ERROR: Table prefix is bad symbols"
         exit 0
     fi
 fi
@@ -164,7 +164,7 @@ fi
 
 echo "Creating user and home directory..."
 
-useradd $USERNAME -m -G sftp -s "/bin/false" -d "/var/www/$USERNAME"
+useradd $USERNAME -m -G sftp -s "/bin/bash" -d "/var/www/$USERNAME"
 if [ "$?" -ne 0 ]; then
     echo "ERROR: Can't add user"
     exit 0
@@ -475,6 +475,7 @@ echo "##MYSQL_DB##$USERNAME##MYSQL_DB_END##"
 echo "##MYSQL_USER##$USERNAME##MYSQL_USER_END##"
 echo "##MYSQL_PASS##$MYSQLPASS##MYSQL_PASS_END##"
 
+echo "##CONNECTORS_SITE##/$CONNECTORSNAME/##CONNECTORS_SITE_END##"
 echo "##MANAGER_SITE##/$MANAGERNAME/##MANAGER_SITE_END##"
 echo "##MANAGER_USER##$USERNAME##MANAGER_USER_END##"
 echo "##MANAGER_PASS##$PASSWORD##MANAGER_PASS_END##"

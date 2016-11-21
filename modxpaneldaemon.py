@@ -17,7 +17,7 @@
 
 __author__ = "Pavel Gvozdb"
 __created_date__ = "05.10.15"
-__version__ = "1.3.1-beta"
+__version__ = "1.4.0-beta"
 
 import os
 import sys
@@ -44,6 +44,7 @@ if not current_path:
 config_f = open( current_path +"/config.yaml" )
 config = yaml.load( config_f )
 
+SECRET = config['secret']
 MYSQL_ROOT = config['mysql_root']
 HOST_DOMAIN = config['host_domain']
 #TASK_DIR = current_path +"/task/"
@@ -132,33 +133,39 @@ class Daemonizer(Daemon):
                                     #log_error.error( action )
                                     set_status(action) # ставим статус, чтобы даймона не закрыли, пока он трудится
 
-                                    try:
-                                        if not 'wait' in data:
-                                            socket_send(conn, data="Done. OK")
-                                    except:
-                                        """ соединение закрыто """
+                                    if data['secret'] == SECRET:
+                                        try:
+                                            if not 'wait' in data:
+                                                socket_send(conn, data="Done. OK")
+                                        except:
+                                            """ соединение закрыто """
 
-                                    #### >> выполняем задание
-                                    if action == 'addplace':
-                                        status = add_place( task=task[i][action], data=data )
+                                        #### >> выполняем задание
+                                        if action == 'addplace':
+                                            status = add_place( task=task[i][action], data=data )
 
-                                    elif action == 'addmodx':
-                                        status = add_modx( task=task[i][action], data=data )
+                                        elif action == 'addmodx':
+                                            status = add_modx( task=task[i][action], data=data )
 
-                                    elif action == 'updatemodx':
-                                        status = update_modx( task=task[i][action], data=data )
+                                        elif action == 'updatemodx':
+                                            status = update_modx( task=task[i][action], data=data )
 
-                                    elif action == 'packages':
-                                        status = packages( username=task[i][action]['user'] )
+                                        elif action == 'password':
+                                            status = password( task=task[i][action], data=data )
 
-                                    elif action == 'remove':
-                                        status = remove_site( username=task[i][action]['user'], data=data )
+                                        elif action == 'packages':
+                                            status = packages( username=task[i][action]['user'] )
 
-                                    elif action == 'demo' or action == 'test' or action == 'lala':
-                                        log_error.error( action )
-                                        log_error.error( task[i] )
-                                        status = demo( task[i][action] )
-                                    #### <<
+                                        elif action == 'remove':
+                                            status = remove_site( username=task[i][action]['user'], data=data )
+
+                                        elif action == 'demo' or action == 'test' or action == 'lala':
+                                            log_error.error( action )
+                                            log_error.error( task[i] )
+                                            status = demo( task[i][action] )
+                                        #### <<
+                                    else:
+                                        socket_send(conn, data="ERROR: Secret key bad")
 
                                     if 'wait' in data:
                                         socket_send(conn, data="Done. OK")
@@ -388,6 +395,7 @@ def add_modx( data={}, task={} ):
                     item['mysql_db'] = r[r.find('##MYSQL_DB##'):r.find('##MYSQL_DB_END##')].replace('##MYSQL_DB##','')
                     item['mysql_user'] = r[r.find('##MYSQL_USER##'):r.find('##MYSQL_USER_END##')].replace('##MYSQL_USER##','')
                     item['mysql_pass'] = r[r.find('##MYSQL_PASS##'):r.find('##MYSQL_PASS_END##')].replace('##MYSQL_PASS##','')
+                    item['connectors_site'] = r[r.find('##CONNECTORS_SITE##'):r.find('##CONNECTORS_SITE_END##')].replace('##CONNECTORS_SITE##','')
                     item['manager_site'] = r[r.find('##MANAGER_SITE##'):r.find('##MANAGER_SITE_END##')].replace('##MANAGER_SITE##','')
                     item['manager_user'] = r[r.find('##MANAGER_USER##'):r.find('##MANAGER_USER_END##')].replace('##MANAGER_USER##','')
                     item['manager_pass'] = r[r.find('##MANAGER_PASS##'):r.find('##MANAGER_PASS_END##')].replace('##MANAGER_PASS##','')
@@ -408,6 +416,7 @@ def add_modx( data={}, task={} ):
                                 mysql_db=%s,\
                                 mysql_user=%s,\
                                 mysql_pass=%s,\
+                                connectors_site=%s,\
                                 manager_site=%s,\
                                 manager_user=%s,\
                                 manager_pass=%s,\
@@ -415,7 +424,7 @@ def add_modx( data={}, task={} ):
                             WHERE\
                                 id=%s\
                     "
-                    dbcur.execute(sql, (item['site'], item['sftp_port'], item['sftp_user'], item['sftp_pass'], item['mysql_site'], item['mysql_table_prefix'], item['mysql_db'], item['mysql_user'], item['mysql_pass'], item['manager_site'], item['manager_user'], item['manager_pass'], item['path'], data['id']))
+                    dbcur.execute(sql, (item['site'], item['sftp_port'], item['sftp_user'], item['sftp_pass'], item['mysql_site'], item['mysql_table_prefix'], item['mysql_db'], item['mysql_user'], item['mysql_pass'], item['connectors_site'], item['manager_site'], item['manager_user'], item['manager_pass'], item['path'], data['id']))
                     dbcur.close()
                     dbconn.close()
 
@@ -455,6 +464,43 @@ def update_modx( data={}, task={} ):
                         id=%s\
             "
             dbcur.execute(sql, (task['version'], data['id']))
+            dbcur.close()
+            dbconn.close()
+
+    return status
+######### <<
+
+######### >> Смена пароля админа MODX
+def password(data={}, task={}):
+    status = False
+    #log_error.error(data)
+
+    if not 'user' in task or not 'password' in task or not 'base_path' in task or not 'id' in data or not 'table' in data:
+        log_error.error( "Ошибка при смене пароля MODX. Переданные параметры:\n\ttask: "+ str(task) +"\n\tdata: "+ str(data) )
+    else:
+        command = "php "+ os.path.abspath(SCRIPT_PHP_DIR) +"/password.php "+ task['base_path'] +" "+ task['user'] +" "+ task['password']
+
+        r = subprocess.Popen( command, stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True, universal_newlines=True )
+        r = str( r.communicate()[0] )
+
+        if r.find('ERROR') != -1:
+            log_error.error( "Ошибка при смене пароля MODX: "+ task['base_path'] +"/\n\tРезультат выполнения: "+ r.replace('\n','\n\t') )
+
+        elif r.find('Done!') != -1:
+            status = True
+            log_action.log(logging.ACTION, "Сменили пароль на MODX для: "+ task['base_path'])
+
+            dbconn = pymysql.connect(user='root', passwd=MYSQL_ROOT, db=data['dbname'])
+            dbcur = dbconn.cursor()
+            sql = "\
+                UPDATE `"+ data['table'] +"`\
+                    SET\
+                        status='run',\
+                        manager_pass=%s\
+                    WHERE\
+                        id=%s\
+            "
+            dbcur.execute(sql, (task['password'], data['id']))
             dbcur.close()
             dbconn.close()
 
