@@ -70,8 +70,10 @@ if [ -d "${ZDIR}" ]; then
     CONNECTORS_DIR="`cat ./../config.xml | grep 'context_connectors_url' | sed 's/.*<context_connectors_url>\(.*\)<\/context_connectors_url>.*/\1/'`"
 
     echo "Replace connectors dir..."
-    rm -r ".${MANAGER_DIR}"
-    rm -r ".${CONNECTORS_DIR}"
+
+    [ $MANAGER_DIR != "/manager/" ] && (rm -r ".${MANAGER_DIR}")
+    [ $CONNECTORS_DIR != "/connectors/" ] && (rm -r ".${CONNECTORS_DIR}")
+
     sudo -u $USERNAME mv ./manager/ ".${MANAGER_DIR}"
     sudo -u $USERNAME mv ./connectors/ ".${CONNECTORS_DIR}"
 
