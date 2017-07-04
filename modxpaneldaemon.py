@@ -17,7 +17,7 @@
 
 __author__ = "Pavel Gvozdb"
 __created_date__ = "05.10.15"
-__version__ = "1.4.0-beta2"
+__version__ = "1.4.0-beta3"
 
 import os
 import sys
@@ -291,7 +291,7 @@ def add_place( data={}, task={} ):
         log_error.error( "Ошибка при добавлении пустого сайта. Переданные параметры:\n\ttask: "+ str(task) +"\n\tdata: "+ str(data) )
     else:
         while try_ != False and try_i <= 5:
-            command = "/bin/bash "+ os.path.abspath(SCRIPT_SH_DIR) +"/addplace.sh -p "+ MYSQL_ROOT +" -h "+ (task['host'] if task['host'] else HOST_DOMAIN) +" -u "+ task['user'] +" "+ ("-d "+ task['domain'] if task['domain'] else "")
+            command = "/bin/bash "+ os.path.abspath(SCRIPT_SH_DIR) +"/addplace.sh -p \""+ MYSQL_ROOT +"\" -h "+ (task['host'] if task['host'] else HOST_DOMAIN) +" -u "+ task['user'] +" "+ ("-d "+ task['domain'] if task['domain'] else "")
             #log_error.error(command)
 
             r = subprocess.Popen(command, stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True, universal_newlines=True)
@@ -359,7 +359,7 @@ def add_modx( data={}, task={} ):
         log_error.error( "Ошибка при добавлении MODX сайта. Переданные параметры:\n\ttask: "+ str(task) +"\n\tdata: "+ str(data) )
     else:
         while try_ != False and try_i <= 5:
-            command = "/bin/bash "+ os.path.abspath(SCRIPT_SH_DIR) +"/addmodx.sh -p "+ MYSQL_ROOT +" -h "+ (task['host'] if task['host'] else HOST_DOMAIN) +" -u "+ task['user'] +" "+ ("-d "+ task['domain'] if task['domain'] else "") +" "+ ("-v "+ task['version'] if task['version'] else "") +" "+ ("-c "+ task['modxconnectors'] if task['modxconnectors'] else "") +" "+ ("-m "+ task['modxmanager'] if task['modxmanager'] else "") +" "+ ("-t "+ task['modxtableprefix'] if task['modxtableprefix'] else "")
+            command = "/bin/bash "+ os.path.abspath(SCRIPT_SH_DIR) +"/addmodx.sh -p \""+ MYSQL_ROOT +"\" -h "+ (task['host'] if task['host'] else HOST_DOMAIN) +" -u "+ task['user'] +" "+ ("-d "+ task['domain'] if task['domain'] else "") +" "+ ("-v "+ task['version'] if task['version'] else "") +" "+ ("-c "+ task['modxconnectors'] if task['modxconnectors'] else "") +" "+ ("-m "+ task['modxmanager'] if task['modxmanager'] else "") +" "+ ("-t "+ task['modxtableprefix'] if task['modxtableprefix'] else "")
             #log_error.error(command)
 
             r = subprocess.Popen( command, stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True, universal_newlines=True )
@@ -535,7 +535,7 @@ def packages( username="" ):
 ######### >> Удаление сайта, каталога, юзера, базы и т.д.
 def remove_site( username="", data={} ):
     status = False
-    command = "/bin/bash "+ os.path.abspath(SCRIPT_SH_DIR) +"/remove.sh "+ MYSQL_ROOT +" "+ username
+    command = "/bin/bash "+ os.path.abspath(SCRIPT_SH_DIR) +"/remove.sh \""+ MYSQL_ROOT +"\" "+ username
 
     r = subprocess.Popen( command, stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True, universal_newlines=True )
     r = str( r.communicate()[0] )
