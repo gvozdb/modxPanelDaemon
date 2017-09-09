@@ -17,7 +17,7 @@
 
 __author__ = "Pavel Gvozdb"
 __created_date__ = "05.10.15"
-__version__ = "1.4.0-beta3"
+__version__ = "1.4.0-beta4"
 
 import os
 import sys
