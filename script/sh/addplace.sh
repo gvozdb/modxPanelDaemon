@@ -18,6 +18,7 @@ SFTPPASS=`< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c12`
 PASSWORD=`< /dev/urandom tr -dc _A-Z-a-z-0-9 | head -c12`
 CONFIGKEY=`< /dev/urandom tr -dc _a-z-0-9 | head -c4`
 DOMAIN=''
+PHPVERSION=''
 
 ############## >> Обработка переданных параметров
 
@@ -30,13 +31,14 @@ then
 fi
 
 
-while getopts "p:h:u:d:v:" Option
+while getopts "p:h:u:d:v:a:" Option
 do
     case $Option in
         p) ROOTPASS=$OPTARG;;
         h) HOST=$OPTARG;;
         u) USERNAME=$OPTARG;;
         d) DOMAIN=$OPTARG;;
+        a) PHPVERSION=$OPTARG;;
         *) echo "ERROR: Invalid key";;
     esac
 done
@@ -95,6 +97,18 @@ if [ -z "$DOMAIN" ]; then
     DOMAIN="$USERNAME.$HOST"
 fi
 
+############## Enter PHP version
+
+if [ -z "$PHPVERSION" ]; then
+    PHPVERSION="7.0"
+else
+    echo -e "$PHPVERSION" | grep "[^0-9.]"
+    if [ "$?" -ne 1 ]; then
+        echo "ERROR: PHP version bad symbols"
+        exit 0
+    fi
+fi
+
 ##############
 
 echo "Creating user and home directory..."
@@ -119,31 +133,7 @@ chown root:root /var/www/$USERNAME
 
 echo "Creating vhost files"
 
-echo "upstream backend-$USERNAME {server unix:/var/run/php7.0-$USERNAME.sock;}
-
-#server {
-#    #server_name pma.$USERNAME.$HOST;
-#    #root /var/www/pma/www;
-#    #location / {
-#    #    proxy_pass http://pma.$HOST/;
-#    #}
-#
-#    # Remove double slashes in url
-#    location ~* .*//+.* {
-#        rewrite (.*)//+(.*) \$1/\$2 permanent;
-#    }
-#}
-server {
-    server_name www.$USERNAME.$HOST;
-    return 301 \$scheme://$USERNAME.$HOST\$request_uri;
-}
-server {
-    server_name $USERNAME.$HOST;
-
-    # Include site config
-    include /etc/nginx/conf.inc/main/$USERNAME.conf;
-    include /etc/nginx/conf.inc/access/$USERNAME.conf;
-}
+echo "upstream backend-$USERNAME {server unix:/var/run/php-$USERNAME.sock;}
 include /etc/nginx/conf.inc/domains/$USERNAME.conf;" > /etc/nginx/sites-available/$USERNAME.conf
 ln -s /etc/nginx/sites-available/$USERNAME.conf /etc/nginx/sites-enabled/$USERNAME.conf
 
@@ -218,39 +208,65 @@ ln -s /var/www/$USERNAME/domains.nginx /etc/nginx/conf.inc/domains/$USERNAME.con
 
 ##############
 
-#echo "Creating php7.0-fpm config"
+#echo "Creating phpX.X-fpm config"
 
-echo "[$USERNAME]
+PHPCONF="[$USERNAME]\n\
+\n\
+listen = /var/run/php-$USERNAME.sock\n\
+listen.mode = 0666\n\
+user = $USERNAME\n\
+group = $USERNAME\n\
+chdir = /var/www/$USERNAME\n\
+\n\
+php_admin_value[upload_tmp_dir] = /var/www/$USERNAME/tmp\n\
+php_admin_value[soap.wsdl_cache_dir] = /var/www/$USERNAME/tmp\n\
+php_admin_value[upload_max_filesize] = 100M\n\
+php_admin_value[post_max_size] = 100M\n\
+php_admin_value[open_basedir] = /var/www/$USERNAME/\n\
+php_admin_value[cgi.fix_pathinfo] = 0\n\
+php_admin_value[date.timezone] = $TIMEZONE\n\
+php_admin_value[session.gc_probability] = 1\n\
+php_admin_value[session.gc_divisor] = 100\n\
+\n\
+pm = dynamic\n\
+pm.max_children = 10\n\
+pm.start_servers = 2\n\
+pm.min_spare_servers = 2\n\
+pm.max_spare_servers = 4"
+echo -e $PHPCONF > /etc/php/5.6/fpm/pool.d/$USERNAME.conf_
+echo -e $PHPCONF > /etc/php/7.0/fpm/pool.d/$USERNAME.conf_
+echo -e $PHPCONF > /etc/php/7.1/fpm/pool.d/$USERNAME.conf_
+echo -e $PHPCONF > /etc/php/7.2/fpm/pool.d/$USERNAME.conf_
 
-listen = /var/run/php7.0-$USERNAME.sock
-listen.mode = 0666
-user = $USERNAME
-group = $USERNAME
-chdir = /var/www/$USERNAME
-
-php_admin_value[upload_tmp_dir] = /var/www/$USERNAME/tmp
-php_admin_value[soap.wsdl_cache_dir] = /var/www/$USERNAME/tmp
-php_admin_value[upload_max_filesize] = 100M
-php_admin_value[post_max_size] = 100M
-php_admin_value[open_basedir] = /var/www/$USERNAME/
-php_admin_value[cgi.fix_pathinfo] = 0
-php_admin_value[date.timezone] = $TIMEZONE
-php_admin_value[session.gc_probability] = 1
-php_admin_value[session.gc_divisor] = 100
-
-pm = dynamic
-pm.max_children = 10
-pm.start_servers = 2
-pm.min_spare_servers = 2
-pm.max_spare_servers = 4" > /etc/php/7.0/fpm/pool.d/$USERNAME.conf
+if [ "$PHPVERSION" == "5.6" ]; then
+    mv -f /etc/php/5.6/fpm/pool.d/$USERNAME.conf_ /etc/php/5.6/fpm/pool.d/$USERNAME.conf
+fi
+if [ "$PHPVERSION" == "7.0" ]; then
+    mv -f /etc/php/7.0/fpm/pool.d/$USERNAME.conf_ /etc/php/7.0/fpm/pool.d/$USERNAME.conf
+fi
+if [ "$PHPVERSION" == "7.1" ]; then
+    mv -f /etc/php/7.1/fpm/pool.d/$USERNAME.conf_ /etc/php/7.1/fpm/pool.d/$USERNAME.conf
+fi
+if [ "$PHPVERSION" == "7.2" ]; then
+    mv -f /etc/php/7.2/fpm/pool.d/$USERNAME.conf_ /etc/php/7.2/fpm/pool.d/$USERNAME.conf
+fi
 
 ##############
 
-echo "Reloading nginx"
-service nginx reload
+echo "Restarting php5.6-fpm"
+service php5.6-fpm restart
 
 echo "Restarting php7.0-fpm"
 service php7.0-fpm restart
+
+echo "Restarting php7.1-fpm"
+service php7.1-fpm restart
+
+echo "Restarting php7.2-fpm"
+service php7.2-fpm restart
+
+echo "Reloading nginx"
+service nginx reload
 
 ##############
 

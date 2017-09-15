@@ -17,7 +17,7 @@
 
 __author__ = "Pavel Gvozdb"
 __created_date__ = "05.10.15"
-__version__ = "1.4.0-beta4"
+__version__ = "1.5.0-beta2"
 
 import os
 import sys
@@ -159,6 +159,9 @@ class Daemonizer(Daemon):
                                         elif action == 'remove':
                                             status = remove_site( username=task[i][action]['user'], data=data )
 
+                                        elif action == 'php':
+                                            status = php_version( task=task[i][action], data=data )
+
                                         elif action == 'demo' or action == 'test' or action == 'lala':
                                             log_error.error( action )
                                             log_error.error( task[i] )
@@ -291,7 +294,7 @@ def add_place( data={}, task={} ):
         log_error.error( "Ошибка при добавлении пустого сайта. Переданные параметры:\n\ttask: "+ str(task) +"\n\tdata: "+ str(data) )
     else:
         while try_ != False and try_i <= 5:
-            command = "/bin/bash "+ os.path.abspath(SCRIPT_SH_DIR) +"/addplace.sh -p \""+ MYSQL_ROOT +"\" -h "+ (task['host'] if task['host'] else HOST_DOMAIN) +" -u "+ task['user'] +" "+ ("-d "+ task['domain'] if task['domain'] else "")
+            command = "/bin/bash "+ os.path.abspath(SCRIPT_SH_DIR) +"/addplace.sh -p \""+ MYSQL_ROOT +"\" -h "+ (task['host'] if task['host'] else HOST_DOMAIN) +" -u "+ task['user'] +" "+ ("-d "+ task['domain'] if task['domain'] else "") +" "+ ("-a "+ task['php'] if task['php'] else "")
             #log_error.error(command)
 
             r = subprocess.Popen(command, stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True, universal_newlines=True)
@@ -359,7 +362,7 @@ def add_modx( data={}, task={} ):
         log_error.error( "Ошибка при добавлении MODX сайта. Переданные параметры:\n\ttask: "+ str(task) +"\n\tdata: "+ str(data) )
     else:
         while try_ != False and try_i <= 5:
-            command = "/bin/bash "+ os.path.abspath(SCRIPT_SH_DIR) +"/addmodx.sh -p \""+ MYSQL_ROOT +"\" -h "+ (task['host'] if task['host'] else HOST_DOMAIN) +" -u "+ task['user'] +" "+ ("-d "+ task['domain'] if task['domain'] else "") +" "+ ("-v "+ task['version'] if task['version'] else "") +" "+ ("-c "+ task['modxconnectors'] if task['modxconnectors'] else "") +" "+ ("-m "+ task['modxmanager'] if task['modxmanager'] else "") +" "+ ("-t "+ task['modxtableprefix'] if task['modxtableprefix'] else "")
+            command = "/bin/bash "+ os.path.abspath(SCRIPT_SH_DIR) +"/addmodx.sh -p \""+ MYSQL_ROOT +"\" -h "+ (task['host'] if task['host'] else HOST_DOMAIN) +" -u "+ task['user'] +" "+ ("-d "+ task['domain'] if task['domain'] else "") +" "+ ("-v "+ task['version'] if task['version'] else "") +" "+ ("-a "+ task['php'] if task['php'] else "") +" "+ ("-c "+ task['modxconnectors'] if task['modxconnectors'] else "") +" "+ ("-m "+ task['modxmanager'] if task['modxmanager'] else "") +" "+ ("-t "+ task['modxtableprefix'] if task['modxtableprefix'] else "")
             #log_error.error(command)
 
             r = subprocess.Popen( command, stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True, universal_newlines=True )
@@ -564,6 +567,43 @@ def remove_site( username="", data={} ):
     return status
 ######### <<
 
+######### >> Смена версии PHP
+def php_version( data={}, task={} ):
+    status = False
+
+    if not 'user' in task or not 'php' in task or not 'table' in data:
+        log_error.error( "Ошибка при смене версии PHP. Переданные параметры:\n\ttask: "+ str(task) +"\n\tdata: "+ str(data) )
+    else:
+        command = "/bin/bash "+ os.path.abspath(SCRIPT_SH_DIR) +"/php.sh "+ task['user'] +" "+ task['php']
+
+        r = subprocess.Popen( command, stderr=subprocess.PIPE, stdout=subprocess.PIPE, shell=True, universal_newlines=True )
+        r = str( r.communicate()[0] )
+
+        if r.find('ERROR') != -1:
+            status = False
+            log_error.error( "Ошибка при смене версии PHP: /var/www/"+ task['user'] +"/\n\tРезультат выполнения: "+ r.replace('\n','\n\t') )
+
+        elif r.find('Done!') != -1:
+            status = True
+            log_action.log(logging.ACTION, "Сменили версию PHP на "+ task['php'] +": /var/www/"+ task['user'] +"/")
+
+            dbconn = pymysql.connect(user='root', passwd=MYSQL_ROOT, db=data['dbname'])
+            dbcur = dbconn.cursor()
+            sql = "\
+                UPDATE `"+ data['table'] +"`\
+                    SET\
+                        status='run',\
+                        php=%s\
+                    WHERE\
+                        id=%s\
+            "
+            dbcur.execute(sql, (task['php'], data['id']))
+            dbcur.close()
+            dbconn.close()
+
+    return status
+######### <<
+
 
 if __name__ == "__main__":
     if not check_process("modxpanel_daemon"):
@@ -583,6 +623,7 @@ if __name__ == "__main__":
     subparsers.add_parser("updatemodx", help="Обновить версию MODX")
     subparsers.add_parser("packages", help="Установить пакеты в MODX")
     subparsers.add_parser("remove", help="Удалить сайт, юзера, БД и любые другие следы существования сайта")
+    subparsers.add_parser("php", help="Сменить версию PHP для сайта")
     parser.add_argument("-V", action="version", version="%(prog)s " + __version__)
     parser.add_argument('--user', '--name', '-u', '-n', action="store")
     parser.add_argument('--domain', '--site', '-d', '-s', action="store")
@@ -594,7 +635,7 @@ if __name__ == "__main__":
     if len(sys.argv) == 1:
         parser.print_help()
 
-    elif args.command == "addplace" or args.command == "addmodx" or args.command == "updatemodx" or args.command == "packages" or args.command == "remove":
+    elif args.command == "addplace" or args.command == "addmodx" or args.command == "updatemodx" or args.command == "packages" or args.command == "remove" or args.command == "php":
         status = False
         if status:
             print( "Done!" )
