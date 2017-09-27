@@ -30,6 +30,20 @@ if [ "$?" -ne 1 -o -z "$VERSION" ]; then
     exit 0
 fi
 
+############## PHP version
+
+PHPVERSION=$3
+
+if [ -z "$PHPVERSION" ]; then
+    PHPVERSION="7.0"
+else
+    echo -e "$PHPVERSION" | grep "[^0-9.]"
+    if [ "$?" -ne 1 ]; then
+        echo "ERROR: PHP version bad symbols"
+        exit 0
+    fi
+fi
+
 ##############
 
 ############## Replace connectors url to new
@@ -79,7 +93,7 @@ if [ -d "${ZDIR}" ]; then
 
     cd "setup"
     echo "Running setup..."
-    sudo -u $USERNAME php ./index.php --installmode=upgrade --config=/var/www/$USERNAME/config.xml --core_path=/var/www/$USERNAME/core/
+    sudo -u $USERNAME php$PHPVERSION ./index.php --installmode=upgrade --config=/var/www/$USERNAME/config.xml --core_path=/var/www/$USERNAME/core/
 
     echo "Done!"
 else

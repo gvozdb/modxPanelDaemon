@@ -446,7 +446,7 @@ if [ -d "${ZDIR}" ]; then
 
     cd "setup"
     echo "Running setup..."
-    sudo -u $USERNAME php ./index.php --core_path=/var/www/$USERNAME/www/core/  --installmode=new --config=/var/www/$USERNAME/config.xml
+    sudo -u $USERNAME php$PHPVERSION ./index.php --core_path=/var/www/$USERNAME/www/core/  --installmode=new --config=/var/www/$USERNAME/config.xml
 
     echo "Done!"
 else
