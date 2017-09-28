@@ -163,7 +163,8 @@ location ~* .*//+.* {
 
 # PHP handler
 location ~ \.php$ {
-    try_files \$uri =404;
+    #try_files \$uri =404;
+    try_files \$uri \$uri/ @rewrite;
 
     include fastcgi_params;
     fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
