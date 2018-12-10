@@ -359,6 +359,22 @@ echo "<modx>
 
 #############
 
+#echo "Creating dumper.yaml"
+
+echo "enabled: true
+database:
+    type: mysql
+    port: 3306
+    host: localhost
+    name: $USERNAME
+    user: $USERNAME
+    pass: $MYSQLPASS
+exclude:
+    - '/www/core/cache/*'
+" > /var/www/$USERNAME/dumper.yaml
+
+#############
+
 echo "Restarting php5.6-fpm"
 service php5.6-fpm restart
 

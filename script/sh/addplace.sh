@@ -252,6 +252,21 @@ if [ "$PHPVERSION" == "7.2" ]; then
     mv -f /etc/php/7.2/fpm/pool.d/$USERNAME.conf_ /etc/php/7.2/fpm/pool.d/$USERNAME.conf
 fi
 
+#############
+
+#echo "Creating dumper.yaml"
+
+echo "enabled: true
+database:
+    type: mysql
+    port: 3306
+    host: localhost
+    name: $USERNAME
+    user: $USERNAME
+    pass: $MYSQLPASS
+exclude: {  }
+" > /var/www/$USERNAME/dumper.yaml
+
 ##############
 
 echo "Restarting php5.6-fpm"
