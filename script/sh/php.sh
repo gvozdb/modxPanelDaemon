@@ -38,6 +38,7 @@ mv -f /etc/php/5.6/fpm/pool.d/$USERNAME.conf /etc/php/5.6/fpm/pool.d/$USERNAME.c
 mv -f /etc/php/7.0/fpm/pool.d/$USERNAME.conf /etc/php/7.0/fpm/pool.d/$USERNAME.conf_
 mv -f /etc/php/7.1/fpm/pool.d/$USERNAME.conf /etc/php/7.1/fpm/pool.d/$USERNAME.conf_
 mv -f /etc/php/7.2/fpm/pool.d/$USERNAME.conf /etc/php/7.2/fpm/pool.d/$USERNAME.conf_
+mv -f /etc/php/7.3/fpm/pool.d/$USERNAME.conf /etc/php/7.3/fpm/pool.d/$USERNAME.conf_
 
 echo "Restarting php5.6-fpm"
 service php5.6-fpm restart
@@ -50,6 +51,9 @@ service php7.1-fpm restart
 
 echo "Restarting php7.2-fpm"
 service php7.2-fpm restart
+
+echo "Restarting php7.3-fpm"
+service php7.3-fpm restart
 
 echo "Reloading nginx"
 service nginx reload
@@ -66,6 +70,9 @@ fi
 if [ "$PHPVERSION" == "7.2" ]; then
     mv -f /etc/php/7.2/fpm/pool.d/$USERNAME.conf_ /etc/php/7.2/fpm/pool.d/$USERNAME.conf
 fi
+if [ "$PHPVERSION" == "7.3" ]; then
+    mv -f /etc/php/7.3/fpm/pool.d/$USERNAME.conf_ /etc/php/7.3/fpm/pool.d/$USERNAME.conf
+fi
 
 ##############
 
@@ -80,6 +87,9 @@ service php7.1-fpm restart
 
 echo "Restarting php7.2-fpm"
 service php7.2-fpm restart
+
+echo "Restarting php7.3-fpm"
+service php7.3-fpm restart
 
 echo "Reloading nginx"
 service nginx reload

@@ -137,7 +137,16 @@ echo "upstream backend-$USERNAME {server unix:/var/run/php-$USERNAME.sock;}
 include /etc/nginx/conf.inc/domains/$USERNAME.conf;" > /etc/nginx/sites-available/$USERNAME.conf
 ln -s /etc/nginx/sites-available/$USERNAME.conf /etc/nginx/sites-enabled/$USERNAME.conf
 
-echo "listen 80;
+echo "set \$is_https '0';
+
+listen 80;
+listen 443 ssl;
+listen [::]:443 ssl;
+
+location /.well-known {
+    root /var/www/html;
+}
+
 charset utf-8;
 root /var/www/$USERNAME/www;
 access_log /var/log/nginx/$USERNAME-access.log;
@@ -145,7 +154,32 @@ error_log /var/log/nginx/$USERNAME-error.log;
 index index.php index.html;
 rewrite_log on;
 
-location ~* ^/(admin|adminka|manager|mngr|connectors|cnnctrs|connectors-[_A-Z-a-z-0-9]+|_build)/ {
+# HTTPS / Redirects
+set \$redirect_https '0';
+if (\$scheme = 'http') {
+    set \$redirect_https '1';
+}
+if (\$request_uri ~ \"^/\.well-known\") {
+    set \$redirect_https '0';
+}
+if (\$is_https = '0') {
+    set \$redirect_https '0';
+}
+if (\$redirect_https = '1') {
+    return 301 https://\$host\$request_uri;
+}
+
+# HTTPS / Include SSL
+#include /etc/nginx/ssl/$DOMAIN.conf;
+#add_header Strict-Transport-Security \"max-age=31536000\"; # исключим возврат на http
+#add_header Content-Security-Policy \"img-src https: data:; upgrade-insecure-requests\"; ## ломаем картинки с http
+
+#
+if (\$request_uri ~* '^/index.php$') {
+    return 301 /;
+}
+
+location ~* ^/(admin|adminka|manager|mngr|m|connectors|cnnctrs|connectors-[_A-Z-a-z-0-9]+|_build)/ {
     location ~ \.php$ {
         try_files \$uri =404;
 
@@ -169,10 +203,17 @@ location ~ \.php$ {
     include fastcgi_params;
     fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
     fastcgi_pass backend-$USERNAME;
+
+    #fastcgi_read_timeout 180;
 }" > /var/www/$USERNAME/main.nginx
 ln -s /var/www/$USERNAME/main.nginx /etc/nginx/conf.inc/main/$USERNAME.conf
 
-echo "# Hide modx /core/ directory
+echo "error_page 404 = @modx;
+location @modx {
+    rewrite ^/(.*)$ /index.php?q=\$1&\$args last;
+}
+
+# Hide modx /core/ directory
 location ~* ^/core/ {
     return 404;
 }
@@ -181,11 +222,26 @@ location ~* ^/core/ {
 location / {
     try_files \$uri \$uri/ @rewrite;
 }
+
+#
+location ~ .*\.(jpg|jpeg|gif|png|ico|bmp|woff2|txt|xml|pdf|flv|swf)$ {
+    add_header Cache-Control \"max-age=31536000, public\";
+}
+location ~ .*\.(css|js)$ {
+    add_header Cache-Control \"max-age=31536000, public\";
+}
+location ~* ^.+\.(jpg|jpeg|gif|png|ico|bmp|woff2|txt|xml|pdf|flv|swf|css|js)$ {
+    try_files           \$uri \$uri/ @rewrite;
+    access_log          off;
+    expires             10d;
+    break;
+}
+
 # --> then redirect request to entry modx index.php
 location @rewrite {
-    rewrite ^/((ru|en|kz)/assets/(.*))$ /assets/\$3 last;
-    rewrite ^/((ru|en|kz)/(.*)/?)$ /index.php?q=\$1 last;
-    rewrite (.*)/$ \$scheme://\$host\$1 permanent;
+    #rewrite ^/((ru|en|kz)/assets/(.*))$ /assets/\$3 last;
+    #rewrite ^/((ru|en|kz)/(.*)/?)$ /index.php?q=\$1 last;
+    #rewrite (.*)/$ \$scheme://\$host\$1 permanent;
     rewrite ^/(.*)$ /index.php?q=\$1 last;
 }" > /var/www/$USERNAME/access.nginx
 ln -s /var/www/$USERNAME/access.nginx /etc/nginx/conf.inc/access/$USERNAME.conf
@@ -238,6 +294,7 @@ echo -e $PHPCONF > /etc/php/5.6/fpm/pool.d/$USERNAME.conf_
 echo -e $PHPCONF > /etc/php/7.0/fpm/pool.d/$USERNAME.conf_
 echo -e $PHPCONF > /etc/php/7.1/fpm/pool.d/$USERNAME.conf_
 echo -e $PHPCONF > /etc/php/7.2/fpm/pool.d/$USERNAME.conf_
+echo -e $PHPCONF > /etc/php/7.3/fpm/pool.d/$USERNAME.conf_
 
 if [ "$PHPVERSION" == "5.6" ]; then
     mv -f /etc/php/5.6/fpm/pool.d/$USERNAME.conf_ /etc/php/5.6/fpm/pool.d/$USERNAME.conf
@@ -250,6 +307,9 @@ if [ "$PHPVERSION" == "7.1" ]; then
 fi
 if [ "$PHPVERSION" == "7.2" ]; then
     mv -f /etc/php/7.2/fpm/pool.d/$USERNAME.conf_ /etc/php/7.2/fpm/pool.d/$USERNAME.conf
+fi
+if [ "$PHPVERSION" == "7.3" ]; then
+    mv -f /etc/php/7.3/fpm/pool.d/$USERNAME.conf_ /etc/php/7.3/fpm/pool.d/$USERNAME.conf
 fi
 
 #############
@@ -280,6 +340,9 @@ service php7.1-fpm restart
 
 echo "Restarting php7.2-fpm"
 service php7.2-fpm restart
+
+echo "Restarting php7.3-fpm"
+service php7.3-fpm restart
 
 echo "Reloading nginx"
 service nginx reload
