@@ -314,7 +314,7 @@ if [ -z "$DOMAIN" ]; then
 else
     echo "server {
     set \$is_https '1';
-    set \$main_host 'gvozdb.ru';
+    set \$main_host '$DOMAIN';
 
     server_name
         $DOMAIN
@@ -326,8 +326,8 @@ else
     }
 
     # Include site config
-    include /etc/nginx/conf.inc/main/gvozdb.conf;
-    include /etc/nginx/conf.inc/access/gvozdb.conf;
+    include /etc/nginx/conf.inc/main/$USERNAME.conf;
+    include /etc/nginx/conf.inc/access/$USERNAME.conf;
 }" > /var/www/$USERNAME/domains.nginx
 fi
 ln -s /var/www/$USERNAME/domains.nginx /etc/nginx/conf.inc/domains/$USERNAME.conf
