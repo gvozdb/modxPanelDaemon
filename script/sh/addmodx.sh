@@ -202,9 +202,7 @@ echo "upstream backend-$USERNAME {server unix:/var/run/php-$USERNAME.sock;}
 include /etc/nginx/conf.inc/domains/$USERNAME.conf;" > /etc/nginx/sites-available/$USERNAME.conf
 ln -s /etc/nginx/sites-available/$USERNAME.conf /etc/nginx/sites-enabled/$USERNAME.conf
 
-echo "set \$is_https '0';
-
-listen 80;
+echo "listen 80;
 listen 443 ssl; # default_server
 listen [::]:443 ssl; # default_server
 
@@ -315,15 +313,21 @@ if [ -z "$DOMAIN" ]; then
     echo "" > /var/www/$USERNAME/domains.nginx
 else
     echo "server {
-    server_name www.$DOMAIN;
-    return 301 \$scheme://$DOMAIN\$request_uri;
-}
-server {
-    server_name $DOMAIN;
+    set \$is_https '1';
+    set \$main_host 'gvozdb.ru';
+
+    server_name
+        $DOMAIN
+        www.$DOMAIN
+    ;
+
+    if (\$host != \$main_host) {
+        return 301 \$scheme://\$main_host\$request_uri;
+    }
 
     # Include site config
-    include /etc/nginx/conf.inc/main/$USERNAME.conf;
-    include /etc/nginx/conf.inc/access/$USERNAME.conf;
+    include /etc/nginx/conf.inc/main/gvozdb.conf;
+    include /etc/nginx/conf.inc/access/gvozdb.conf;
 }" > /var/www/$USERNAME/domains.nginx
 fi
 ln -s /var/www/$USERNAME/domains.nginx /etc/nginx/conf.inc/domains/$USERNAME.conf
