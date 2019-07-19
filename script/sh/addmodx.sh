@@ -313,7 +313,7 @@ if [ -z "$DOMAIN" ]; then
     echo "" > /var/www/$USERNAME/domains.nginx
 else
     echo "server {
-    set \$is_https '1';
+    set \$is_https '0';
     set \$main_host '$DOMAIN';
 
     server_name
