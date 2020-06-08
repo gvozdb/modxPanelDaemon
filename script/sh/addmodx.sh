@@ -391,9 +391,9 @@ echo "<modx>
     <database>$USERNAME</database>
     <database_user>$USERNAME</database_user>
     <database_password>$MYSQLPASS</database_password>
-    <database_connection_charset>utf8</database_connection_charset>
-    <database_charset>utf8</database_charset>
-    <database_collation>utf8_unicode_ci</database_collation>
+    <database_connection_charset>utf8mb4</database_connection_charset>
+    <database_charset>utf8mb4</database_charset>
+    <database_collation>utf8mb4_general_ci</database_collation>
     <table_prefix>$TABLEPREFIX</table_prefix>
     <https_port>443</https_port>
     <http_host>$USERNAME.$HOST</http_host>
@@ -461,7 +461,7 @@ service nginx reload
 
 echo "Creating database"
 
-Q1="CREATE DATABASE IF NOT EXISTS $USERNAME DEFAULT CHARACTER SET utf8 COLLATE utf8_unicode_ci;"
+Q1="CREATE DATABASE IF NOT EXISTS $USERNAME DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;"
 Q2="GRANT ALTER,DELETE,DROP,CREATE,INDEX,INSERT,SELECT,UPDATE,CREATE TEMPORARY TABLES,LOCK TABLES ON $USERNAME.* TO '$USERNAME'@'localhost' IDENTIFIED BY '$MYSQLPASS';"
 Q3="FLUSH PRIVILEGES;"
 SQL="${Q1}${Q2}${Q3}"

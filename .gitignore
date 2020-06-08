@@ -1,3 +1,6 @@
 .idea
+log/*
+tmp/*
+config.yaml backup
 script/php/*
 !script/php/password.php
