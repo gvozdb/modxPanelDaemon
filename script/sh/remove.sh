@@ -47,6 +47,8 @@ rm -f /etc/php/7.2/fpm/pool.d/$USERNAME.conf
 rm -f /etc/php/7.2/fpm/pool.d/$USERNAME.conf_
 rm -f /etc/php/7.3/fpm/pool.d/$USERNAME.conf
 rm -f /etc/php/7.3/fpm/pool.d/$USERNAME.conf_
+rm -f /etc/php/7.4/fpm/pool.d/$USERNAME.conf
+rm -f /etc/php/7.4/fpm/pool.d/$USERNAME.conf_
 find /var/log/nginx/ -type f -name "$USERNAME-*" -exec rm '{}' \;
 
 service nginx reload
@@ -55,6 +57,7 @@ service php7.0-fpm restart
 service php7.1-fpm restart
 service php7.2-fpm restart
 service php7.3-fpm restart
+service php7.4-fpm restart
 
 #pkill -U $USERNAME
 userdel -rf $USERNAME
