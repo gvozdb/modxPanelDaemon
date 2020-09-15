@@ -237,12 +237,24 @@ if (\$redirect_https = '1') {
 #add_header Strict-Transport-Security \"max-age=31536000\"; # исключим возврат на http
 #add_header Content-Security-Policy \"img-src https: data:; upgrade-insecure-requests\"; ## ломаем картинки с http
 
+##
 #
+##
+if (\$http_user_agent ~* (SemrushBot|MJ12bot|AhrefsBot|bingbot|DotBot|LinkpadBot|SputnikBot|statdom.ru|MegaIndex.ru|WebDataStats|Jooblebot|Baiduspider|BackupLand|NetcraftSurveyAgent|openstat.ru)) {
+    return 444;
+}
+
+##
+#
+##
 if (\$request_uri ~* '^/index.php$') {
     return 301 /;
 }
 
-location ~* ^/($MANAGERNAME|$CONNECTORSNAME|_build)/ {
+##
+#
+##
+location ~* ^/($MANAGERNAME|$CONNECTORSNAME|admin|adminka|manager|mngr|m|connectors|cnnctrs|connectors-[_A-Z-a-z-0-9]+|_build)/ {
     location ~ \.php$ {
         try_files \$uri =404;
 
@@ -253,12 +265,16 @@ location ~* ^/($MANAGERNAME|$CONNECTORSNAME|_build)/ {
     break;
 }
 
+##
 # Remove double slashes in url
+##
 location ~* .*//+.* {
     rewrite (.*)//+(.*) \$1/\$2 permanent;
 }
 
+##
 # PHP handler
+##
 location ~ \.php$ {
     #try_files \$uri =404;
     try_files \$uri \$uri/ @rewrite;
@@ -271,36 +287,57 @@ location ~ \.php$ {
 }" > /var/www/$USERNAME/main.nginx
 ln -s /var/www/$USERNAME/main.nginx /etc/nginx/conf.inc/main/$USERNAME.conf
 
-echo "error_page 404 = @modx;
+echo "##
+#
+##
+#location /api/ {
+#   try_files \$uri @modx_rest;
+#}
+#location @modx_rest {
+#   rewrite ^/api/(.*)$ /api/index.php?_rest=\$1&\$args last;
+#}
+
+##
+#
+##
+error_page 404 = @modx;
 location @modx {
     rewrite ^/(.*)$ /index.php?q=\$1&\$args last;
 }
 
+##
 # Hide modx /core/ directory
+##
 location ~* ^/core/ {
     return 404;
 }
 
+##
 # If file and folder not exists -->
+##
 location / {
     try_files \$uri \$uri/ @rewrite;
 }
 
+##
 #
+##
 location ~ .*\.(jpg|jpeg|gif|png|ico|bmp|woff2|txt|xml|pdf|flv|swf)$ {
-    add_header Cache-Control \"max-age=31536000, public\";
+    add_header Cache-Control \"max-age=31557600, public\";
 }
 location ~ .*\.(css|js)$ {
-    add_header Cache-Control \"max-age=31536000, public\";
+    add_header Cache-Control \"max-age=31557600, public\";
 }
 location ~* ^.+\.(jpg|jpeg|gif|png|ico|bmp|woff2|txt|xml|pdf|flv|swf|css|js)$ {
-    try_files           \$uri \$uri/ @rewrite;
-    access_log          off;
-    expires             10d;
+    try_files \$uri \$uri/ @rewrite;
+    access_log off;
+    expires 14d;
     break;
 }
 
+##
 # --> then redirect request to entry modx index.php
+##
 location @rewrite {
     #rewrite ^/((ru|en|kz)/assets/(.*))$ /assets/\$3 last;
     #rewrite ^/((ru|en|kz)/(.*)/?)$ /index.php?q=\$1 last;
