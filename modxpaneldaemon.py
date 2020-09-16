@@ -42,7 +42,7 @@ if not current_path:
     current_path = '.'
 
 config_f = open( current_path +"/config.yaml" )
-config = yaml.load( config_f )
+config = yaml.load( config_f, yaml.Loader )
 
 SECRET = config['secret']
 MYSQL_ROOT = config['mysql_root']
