@@ -17,7 +17,7 @@
 
 __author__ = "Pavel Gvozdb"
 __created_date__ = "05.10.15"
-__version__ = "1.5.4-beta"
+__version__ = "1.5.5-beta"
 
 import os
 import sys
@@ -52,6 +52,7 @@ PORT = config['socket_port']
 TIMEOUT = config['socket_timeout']
 TIMER = config['timer']
 TMP_DIR = current_path +"/tmp/"
+PROCESS_NAME = "modxpanel"
 PID_FILE = TMP_DIR +".modxpanel-daemon.pid"
 STATUS_FILE = TMP_DIR +".modxpanel-daemon.status"
 LOG_FILE = current_path +"/log/access.log"
@@ -606,7 +607,7 @@ def php_version( data={}, task={} ):
 
 
 if __name__ == "__main__":
-    if not check_process("modxpanel_daemon"):
+    if not check_process(PROCESS_NAME):
         if os.path.exists(os.path.abspath(PID_FILE)):
             os.remove(os.path.abspath(PID_FILE))
 
@@ -663,10 +664,10 @@ if __name__ == "__main__":
 
     elif args.command == "purge":
         # Purge if daemon offline else purge and restart
-        if check_process("modxpanel_daemon"):
+        if check_process(PROCESS_NAME):
             if os.path.exists(PID_FILE):
                 daemon.stop()
-                while check_process("modxpanel_daemon")[1] > 1:
+                while check_process(PROCESS_NAME)[1] > 1:
                     time.sleep(0.3)
                 daemon.start()
 
