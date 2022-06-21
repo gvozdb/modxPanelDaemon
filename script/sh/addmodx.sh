@@ -203,8 +203,8 @@ include /etc/nginx/conf.inc/domains/$USERNAME.conf;" > /etc/nginx/sites-availabl
 ln -s /etc/nginx/sites-available/$USERNAME.conf /etc/nginx/sites-enabled/$USERNAME.conf
 
 echo "listen 80;
-listen 443 ssl; # default_server
-listen [::]:443 ssl; # default_server
+#listen 443 ssl; # default_server
+#listen [::]:443 ssl; # default_server
 
 location /.well-known {
     root /var/www/html;
