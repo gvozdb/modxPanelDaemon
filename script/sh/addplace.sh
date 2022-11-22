@@ -141,8 +141,9 @@ echo "listen 80;
 #listen 443 ssl; # default_server
 #listen [::]:443 ssl; # default_server
 
-location /.well-known {
+location ~* ^/\.well-known/ {
     root /var/www/html;
+    break;
 }
 
 charset utf-8;
