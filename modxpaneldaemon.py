@@ -42,10 +42,12 @@ if not current_path:
     current_path = '.'
 
 config_f = open( current_path +"/config.yaml" )
-config = yaml.load( config_f, yaml.Loader )
+config = yaml.safe_load( config_f )
 
 SECRET = config['secret']
 MYSQL_ROOT = config['mysql_root']
+MYSQL_ROOTUSER = config['mysql_rootuser']
+MYSQL_ROOTPASS = config['mysql_rootpass']
 HOST_DOMAIN = config['host_domain']
 #TASK_DIR = current_path +"/task/"
 PORT = config['socket_port']
@@ -123,7 +125,7 @@ class Daemonizer(Daemon):
                     task_yaml = socket_parse(conn, addr)
 
                     if (task_yaml != 'Empty'):
-                        tasks = yaml.load(task_yaml)
+                        tasks = yaml.safe_load(task_yaml)
 
                         if( tasks != None and isinstance(tasks, dict) and tasks['data'] and tasks['task'] ):
                             data = tasks['data']
@@ -326,7 +328,7 @@ def add_place( data={}, task={} ):
                     item['mysql_pass'] = r[r.find('##MYSQL_PASS##'):r.find('##MYSQL_PASS_END##')].replace('##MYSQL_PASS##','')
                     item['path'] = r[r.find('##PATH##'):r.find('##PATH_END##')].replace('##PATH##','')
 
-                    dbconn = pymysql.connect(user='root', passwd=MYSQL_ROOT, db=data['dbname'])
+                    dbconn = pymysql.connect(user=MYSQL_ROOTUSER, passwd=MYSQL_ROOTPASS, db=data['dbname'])
                     dbcur = dbconn.cursor()
                     sql = "\
                         UPDATE `"+ data['table'] +"`\
@@ -405,7 +407,7 @@ def add_modx( data={}, task={} ):
                     item['manager_pass'] = r[r.find('##MANAGER_PASS##'):r.find('##MANAGER_PASS_END##')].replace('##MANAGER_PASS##','')
                     item['path'] = r[r.find('##PATH##'):r.find('##PATH_END##')].replace('##PATH##','')
 
-                    dbconn = pymysql.connect(user='root', passwd=MYSQL_ROOT, db=data['dbname'])
+                    dbconn = pymysql.connect(user=MYSQL_ROOTUSER, passwd=MYSQL_ROOTPASS, db=data['dbname'])
                     dbcur = dbconn.cursor()
                     sql = "\
                         UPDATE `"+ data['table'] +"`\
@@ -457,7 +459,7 @@ def update_modx( data={}, task={} ):
             status = True
             log_action.log(logging.ACTION, "Обновили MODX"+ (" до версии "+ task['version'] if task['version'] else "") +" для: /var/www/"+ task['user'] +"/" )
 
-            dbconn = pymysql.connect(user='root', passwd=MYSQL_ROOT, db=data['dbname'])
+            dbconn = pymysql.connect(user=MYSQL_ROOTUSER, passwd=MYSQL_ROOTPASS, db=data['dbname'])
             dbcur = dbconn.cursor()
             sql = "\
                 UPDATE `"+ data['table'] +"`\
@@ -494,7 +496,7 @@ def password(data={}, task={}):
             status = True
             log_action.log(logging.ACTION, "Сменили пароль на MODX для: "+ task['base_path'])
 
-            dbconn = pymysql.connect(user='root', passwd=MYSQL_ROOT, db=data['dbname'])
+            dbconn = pymysql.connect(user=MYSQL_ROOTUSER, passwd=MYSQL_ROOTPASS, db=data['dbname'])
             dbcur = dbconn.cursor()
             sql = "\
                 UPDATE `"+ data['table'] +"`\
@@ -552,7 +554,7 @@ def remove_site( username="", data={} ):
         status = True
         log_action.log(logging.ACTION, "Удалили сайт, юзера, БД, каталог: /var/www/"+ username +"/")
 
-        dbconn = pymysql.connect(user='root', passwd=MYSQL_ROOT, db=data['dbname'])
+        dbconn = pymysql.connect(user=MYSQL_ROOTUSER, passwd=MYSQL_ROOTPASS, db=data['dbname'])
         dbcur = dbconn.cursor()
         sql = "\
             UPDATE `"+ data['table'] +"`\
@@ -588,7 +590,7 @@ def php_version( data={}, task={} ):
             status = True
             log_action.log(logging.ACTION, "Сменили версию PHP на "+ task['php'] +": /var/www/"+ task['user'] +"/")
 
-            dbconn = pymysql.connect(user='root', passwd=MYSQL_ROOT, db=data['dbname'])
+            dbconn = pymysql.connect(user=MYSQL_ROOTUSER, passwd=MYSQL_ROOTPASS, db=data['dbname'])
             dbcur = dbconn.cursor()
             sql = "\
                 UPDATE `"+ data['table'] +"`\

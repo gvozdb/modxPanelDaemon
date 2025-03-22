@@ -1,8 +1,12 @@
 # Secret string
 secret: "DHJKGFksdjfghjsldFHgsyiwur89ug783rgdkhs"
 
-# Root password MYSQL
+# MYSQL / Root password
 mysql_root: ""
+
+# MYSQL / Like root
+mysql_rootuser: ""
+mysql_rootpass: ""
 
 # Domain for subdomains new sites
 host_domain: "host.ru"
