@@ -332,16 +332,21 @@ pm.max_children = 10\n\
 pm.start_servers = 2\n\
 pm.min_spare_servers = 2\n\
 pm.max_spare_servers = 4"
-echo -e $PHPCONF > /etc/php/5.6/fpm/pool.d/$USERNAME.conf_
+#echo -e $PHPCONF > /etc/php/5.6/fpm/pool.d/$USERNAME.conf_
 echo -e $PHPCONF > /etc/php/7.0/fpm/pool.d/$USERNAME.conf_
 echo -e $PHPCONF > /etc/php/7.1/fpm/pool.d/$USERNAME.conf_
 echo -e $PHPCONF > /etc/php/7.2/fpm/pool.d/$USERNAME.conf_
 echo -e $PHPCONF > /etc/php/7.3/fpm/pool.d/$USERNAME.conf_
 echo -e $PHPCONF > /etc/php/7.4/fpm/pool.d/$USERNAME.conf_
+echo -e $PHPCONF > /etc/php/8.0/fpm/pool.d/$USERNAME.conf_
+echo -e $PHPCONF > /etc/php/8.1/fpm/pool.d/$USERNAME.conf_
+echo -e $PHPCONF > /etc/php/8.2/fpm/pool.d/$USERNAME.conf_
+echo -e $PHPCONF > /etc/php/8.3/fpm/pool.d/$USERNAME.conf_
+echo -e $PHPCONF > /etc/php/8.4/fpm/pool.d/$USERNAME.conf_
 
-if [ "$PHPVERSION" == "5.6" ]; then
-    mv -f /etc/php/5.6/fpm/pool.d/$USERNAME.conf_ /etc/php/5.6/fpm/pool.d/$USERNAME.conf
-fi
+#if [ "$PHPVERSION" == "5.6" ]; then
+#    mv -f /etc/php/5.6/fpm/pool.d/$USERNAME.conf_ /etc/php/5.6/fpm/pool.d/$USERNAME.conf
+#fi
 if [ "$PHPVERSION" == "7.0" ]; then
     mv -f /etc/php/7.0/fpm/pool.d/$USERNAME.conf_ /etc/php/7.0/fpm/pool.d/$USERNAME.conf
 fi
@@ -356,6 +361,21 @@ if [ "$PHPVERSION" == "7.3" ]; then
 fi
 if [ "$PHPVERSION" == "7.4" ]; then
     mv -f /etc/php/7.4/fpm/pool.d/$USERNAME.conf_ /etc/php/7.4/fpm/pool.d/$USERNAME.conf
+fi
+if [ "$PHPVERSION" == "8.0" ]; then
+    mv -f /etc/php/8.0/fpm/pool.d/$USERNAME.conf_ /etc/php/8.0/fpm/pool.d/$USERNAME.conf
+fi
+if [ "$PHPVERSION" == "8.1" ]; then
+    mv -f /etc/php/8.1/fpm/pool.d/$USERNAME.conf_ /etc/php/8.1/fpm/pool.d/$USERNAME.conf
+fi
+if [ "$PHPVERSION" == "8.2" ]; then
+    mv -f /etc/php/8.2/fpm/pool.d/$USERNAME.conf_ /etc/php/8.2/fpm/pool.d/$USERNAME.conf
+fi
+if [ "$PHPVERSION" == "8.3" ]; then
+    mv -f /etc/php/8.3/fpm/pool.d/$USERNAME.conf_ /etc/php/8.3/fpm/pool.d/$USERNAME.conf
+fi
+if [ "$PHPVERSION" == "8.4" ]; then
+    mv -f /etc/php/8.4/fpm/pool.d/$USERNAME.conf_ /etc/php/8.4/fpm/pool.d/$USERNAME.conf
 fi
 
 #############
@@ -375,8 +395,8 @@ exclude: {  }
 
 ##############
 
-echo "Restarting php5.6-fpm"
-service php5.6-fpm restart
+#echo "Restarting php5.6-fpm"
+#service php5.6-fpm restart
 
 echo "Restarting php7.0-fpm"
 service php7.0-fpm restart
@@ -393,6 +413,21 @@ service php7.3-fpm restart
 echo "Restarting php7.4-fpm"
 service php7.4-fpm restart
 
+echo "Restarting php8.0-fpm"
+service php8.0-fpm restart
+
+echo "Restarting php8.1-fpm"
+service php8.1-fpm restart
+
+echo "Restarting php8.2-fpm"
+service php8.2-fpm restart
+
+echo "Restarting php8.3-fpm"
+service php8.3-fpm restart
+
+echo "Restarting php8.4-fpm"
+service php8.4-fpm restart
+
 echo "Reloading nginx"
 service nginx reload
 
@@ -401,9 +436,10 @@ service nginx reload
 echo "Creating database"
 
 Q1="CREATE DATABASE IF NOT EXISTS $USERNAME DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;"
-Q2="GRANT ALTER,DELETE,DROP,CREATE,INDEX,INSERT,SELECT,UPDATE,CREATE TEMPORARY TABLES,LOCK TABLES ON $USERNAME.* TO '$USERNAME'@'localhost' IDENTIFIED BY '$MYSQLPASS';"
-Q3="FLUSH PRIVILEGES;"
-SQL="${Q1}${Q2}${Q3}"
+Q2="CREATE USER IF NOT EXISTS '$USERNAME'@'localhost' IDENTIFIED BY '$MYSQLPASS';"
+Q3="GRANT ALTER,DELETE,DROP,CREATE,INDEX,INSERT,SELECT,UPDATE,CREATE TEMPORARY TABLES,LOCK TABLES ON $USERNAME.* TO '$USERNAME'@'localhost';"
+Q4="FLUSH PRIVILEGES;"
+SQL="${Q1}${Q2}${Q3}${Q4}"
 
 mysql -uroot --password=$ROOTPASS -e "$SQL"
 
